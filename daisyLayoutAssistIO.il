@@ -1,4 +1,47 @@
+/* funcationName
+ * Parameters
+ * - para1
+ * - para 2
+ *
+ * Description
+ */
 
+
+
+
+/* daisyLALoadBinding
+ * Parameters
+ * - data
+ * - tree
+ *
+ * Loads the bindings stored in the connection file and loads it into the given tree
+ */
+(procedure daisyLALoadBinding(data tree)
+    daisyLAlog(0 "daisyLALoadBinding")
+    
+    libName = data->libName
+    cellName = data->cellName
+    
+    ; TODO Get filename from some config
+    ; TODO Make it die gracefully
+    corrFile = abOpenTextCellView(libName cellName "conn2" "r") ; Change to read/write and read whatever is defined there first
+    
+    line = lineread(corrFile->port)
+    
+    unpacked = daisyLAUnpackBinding(data line)
+        
+    abCloseTextCellView(corrFile)
+    
+    data->bindings = unpacked
+    
+    daisyLAPopulateBindingsTreeWithData(data tree)
+)
+
+
+/************************************************************************
+ * Fixed above
+ * TODO Fix below
+ ***********************************************************************/
 
 
 ;------------------------------------------------------------------------
@@ -131,7 +174,7 @@ textObj
 t
 ))
 
-procedure( daisyRNCreateCorrespondenceTable()
+procedure( daisyLACreateCorrespondenceTable()
     let( (window libName cellName corrFile)
         window = hiGetCurrentWindow()
         libName = window->cellView->libName
@@ -142,11 +185,11 @@ procedure( daisyRNCreateCorrespondenceTable()
             layout = dbOpenCellViewByType(libName cellName "layout")
             (setq schematic_instances makeTable("schematicInstances"))
             (setq layout_instances makeTable("layoutInstances"))
-            ;println(schematic->instances~>??)
+            
             (foreach inst schematic->instances
                 (setq simLibs list("basic" "analogLib"))
                 (if (member inst->libName simLibs) then
-                    printf(strcat("Instance " inst->name " - " inst->cellName " is from a Simlib - ignoring\n"))
+                    daisyLAlog(1 strcat("Instance " inst->name " - " inst->cellName " is from a Simlib - ignoring\n"))
                 else
                     let( ((terms list()))
                         (foreach term inst->instTerms
@@ -159,9 +202,8 @@ procedure( daisyRNCreateCorrespondenceTable()
             (foreach inst layout->instances
                 (setq simLibs list("basic" "analogLib"))
                 (if (member inst->libName simLibs) then
-                    printf(strcat("Instance " inst " is from a Simlib - ignoring\n"))
+                    daisyLAlog(1 strcat("Instance " inst " is from a Simlib - ignoring\n"))
                 else
-                    ;println(inst->master->terminals~>??)
                     let( ((terms list()))
                         (foreach term inst->master->terminals
                             terms = append(list(term->name) terms)
@@ -174,20 +216,14 @@ procedure( daisyRNCreateCorrespondenceTable()
             printf("Starting to match instances from layout to schematic\n")
             (let ((matched list()) (unmatched list()))
                 (foreach inst layout_instances
-                    ;println(inst)
-                    ;println(schematic_instances[inst])
                     (if (listp(schematic_instances[inst]) && sort(schematic_instances[inst] nil) == sort(layout_instances[inst] nil)) then
                         ; Matching names and terms
-                        printf(strcat("Instance " inst " is matched.\n"))
-                        ;println(schematic_instances[inst])
-                        ;println(layout_instances[inst])
-                        ;println(sort(schematic_instances[inst] nil))
-                        ;println(sort(layout_instances[inst] nil))
+                        daisyLAlog(1 strcat("Instance " inst " is matched.\n"))
                             
                         ; Since match we add them to the matched list
                         matched = append(list(inst layout_instances[inst]) matched)
                     else
-                        printf(strcat("Instance " inst " is NOT matched\n"))
+                        daisyLAlog(1 strcat("Instance " inst " is NOT matched\n"))
                             
                         ; Since unmatch we add them to the unmatched list
                         unmatched = append(list(inst layout_instances[inst]) unmatched) 

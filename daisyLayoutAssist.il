@@ -1,4 +1,4 @@
-; Created in March 2018 by Martin Nielsen-Lönn (c)
+; Created in March 2018 by Martin Nielsen-Lönn ( c )
 ;
 ; Creates a GUI for connecting schematic and layout instances in Cadence Virtuoso.
 ; 1. Load the file
@@ -13,14 +13,93 @@
 ; TODO Alert box for auto bind
 ; TODO REFACTORING REQUIRED!
 
-load("daisyLayoutAssistGui.il")
-load("daisyLayoutAssistHelpers.il")
+(load "daisyLayoutAssistGui.il")
+(load "daisyLayoutAssistHelpers.il")
+
+/* functionName(para1, para2)
+ * Parameters
+ * - para1
+ * - para2
+ *
+ * Description
+ *
+ * T1ODO
+ * - 
+ */
 
 
-(procedure daisyRNUnbindInstance(data desc)
+/************************************************************************
+ * Fixed above
+ * TODO Fix below
+ ***********************************************************************/
+
+/* daisyLAUnpackBinding(data pack)
+ * Parameters
+ * - data
+ * - pack
+ *
+ * Description
+ *
+ * T1ODO
+ * - 
+ */
+procedure( daisyLAUnpackBinding(data pack)
+    ; Unpack pack to a struct of the correct DPL
+    
+    (let (result)
+        result = ncons(nil)
+        (foreach subList car(pack)
+            (case car(subList)
+                ("matched"
+                    result->matched = car(cdr(subList))
+                )
+                ("unmatched"
+                    (if car(car(cdr(subList))) == "schematic" then
+                        result->unmatched_schematic = car(cdr(car(cdr(subList))))
+                        result->unmatched_layout = car(cdr(car(cdr(cdr(subList)))))
+                    else
+                        result->unmatched_schematic = car(cdr(car(cdr(cdr(subList)))))
+                        result->unmatched_layout = car(cdr(car(cdr(subList))))
+                    )
+                )
+            )
+        )
+        
+        result
+    )
+)
+
+
+procedure( daisyLAUnpackBinding(data pack)
+    ; Unpack pack to a struct of the correct DPL
+    
+    (let (result)
+        result = ncons(nil)
+        (foreach subList car(pack)
+            (case car(subList)
+                ("matched"
+                    result->matched = car(cdr(subList))
+                )
+                ("unmatched"
+                    (if car(car(cdr(subList))) == "schematic" then
+                        result->unmatched_schematic = car(cdr(car(cdr(subList))))
+                        result->unmatched_layout = car(cdr(car(cdr(cdr(subList)))))
+                    else
+                        result->unmatched_schematic = car(cdr(car(cdr(cdr(subList)))))
+                        result->unmatched_layout = car(cdr(car(cdr(subList))))
+                    )
+                )
+            )
+        )
+        
+        result
+    )
+)
+
+procedure( daisyLAUnbindInstance(data desc)
     ; Get schematic and layout parts
     (let (
-            (instBindings car(daisyRNGetBindingForInstance(data->bindings car(desc))))
+            (instBindings car(daisyLAGetBindingForInstance(data->bindings car(desc))))
             (schTerms list())
             (layTerms list())
             (schBinding list())
@@ -41,14 +120,14 @@ load("daisyLayoutAssistHelpers.il")
         layBinding = list("-" nth(1 instBindings) list(list() list() layTerms))
     
         ; Remove from matched instances
-        data->bindings->matched = daisyRNRemoveMatchedInstance(data->bindings car(desc))
+        data->bindings->matched = daisyLARemoveMatchedInstance(data->bindings car(desc))
         
         data->bindings->unmatched_schematic = cons(schBinding data->bindings->unmatched_schematic)
         data->bindings->unmatched_layout= cons(layBinding data->bindings->unmatched_layout)
     )
 )
 
-(procedure daisyRNCreateAndDisplayBindingWindow(data schDesc layDesc matchedTerms schTerms layTerms tree)    
+procedure( daisyLACreateAndDisplayBindingWindow(data schDesc layDesc matchedTerms schTerms layTerms tree)    
     ; Create fields
     schTermsLabel = hiCreateLabel(
         ?name    `schTermsLabel
@@ -80,20 +159,20 @@ load("daisyLayoutAssistHelpers.il")
     bindButton = hiCreateButton(
         ?name `bindTermsButton
         ?buttonText "Bind terms"
-        ?callback "daisyRNBindingFormBindTermsCB(form)"
+        ?callback "daisyLABindingFormBindTermsCB(form)"
     )
     
     unbindButton = hiCreateButton(
         ?name `unbindTermsButton
         ?buttonText "Unbind terms"
-        ?callback "daisyRNBindingFormUnbindTermsCB(form)"
+        ?callback "daisyLABindingFormUnbindTermsCB(form)"
     )
     
     ; hiCreateAppForm
     form = hiCreateAppForm(
-        ?name gensym("daisyRNBindForm")
+        ?name gensym("daisyLABindForm")
         ?formTitle "Select bindings for instance"
-        ?callback "daisyRNBindingFormCB(data schDesc layDesc tree form)"
+        ?callback "daisyLABindingFormCB(data schDesc layDesc tree form)"
         ?fields list(
                     bindButton
                     unbindButton
@@ -103,7 +182,7 @@ load("daisyLayoutAssistHelpers.il")
                     layTermsField
                     bindedTermsLabel
                     bindedTermsField)
-        ?help "daisyRN"
+        ?help "daisyLA"
     )
 
     ; hiDisplayForm or hiOpenWindow
@@ -118,8 +197,8 @@ load("daisyLayoutAssistHelpers.il")
     )
 )
 
-(procedure daisyRNBindingFormCB(data schDesc layDesc tree form)
-    println(form~>??)
+procedure( daisyLABindingFormCB(data schDesc layDesc tree form)
+    daisyLAlog(0 "daisyLABindingFormCB")
     bindingTermsValues = form->bindedTermsField->choices
 
     ; TODO Rename
@@ -128,7 +207,7 @@ load("daisyLayoutAssistHelpers.il")
     else
         test = list(car(schDesc) nth(1 layDesc))
     )
-    println(test)
+    daisyLAlog(0 test)
     
     (let ((terms list()))
         (foreach pair bindingTermsValues
@@ -155,24 +234,24 @@ load("daisyLayoutAssistHelpers.il")
     (if !null(layDesc) then
         data->bindings->matched = cons(test data->bindings->matched)
         
-        data->bindings->unmatched_schematic = daisyRNRemoveUnmatchedInstance(data->bindings->unmatched_schematic test)
-        data->bindings->unmatched_layout = daisyRNRemoveUnmatchedInstance(data->bindings->unmatched_layout test)
+        data->bindings->unmatched_schematic = daisyLARemoveUnmatchedInstance(data->bindings->unmatched_schematic test)
+        data->bindings->unmatched_layout = daisyLARemoveUnmatchedInstance(data->bindings->unmatched_layout test)
     else
-        data->bindings->matched = daisyRNReplaceBinding(data->bindings->matched test)
+        data->bindings->matched = daisyLAReplaceBinding(data->bindings->matched test)
     )
         
     println("IN CALLBACK")
     
-    daisyRNPopulateBindingsTreeWithData(data tree)
+    daisyLAPopulateBindingsTreeWithData(data tree)
     
     ; Save data
-    ;daisyRNSaveBinding(data tree)
+    ;daisyLASaveBinding(data tree)
     ; Load bindings
-    ;daisyRNLoadBinding(data tree)
+    ;daisyLALoadBinding(data tree)
 )
 
-(procedure daisyRNRemoveUnmatchedInstance(unmatched instName)
-    println(unmatched)
+procedure( daisyLARemoveUnmatchedInstance(unmatched instName)
+    daisyLAlog(1 unmatched)
     (let ((stillUnmatched list()))
         (foreach unmatch unmatched
             (cond
@@ -196,14 +275,14 @@ load("daisyLayoutAssistHelpers.il")
 )
 
 
-(procedure daisyRNSchWindowInData(data)
+(procedure daisyLASchWindowInData(data)
     (cond
         (null(hiGetCurrentWindow()->data->schWindow)
-            println("No schematic window")
+            daisyLAlog(2 "No schematic window")
             nil
         )
         (!member(hiGetCurrentWindow()->data->schWindow hiGetWindowList())
-            println("No schematic window")
+            daisyLAlog(2 "No schematic window")
             nil
         )
         (t
@@ -212,9 +291,9 @@ load("daisyLayoutAssistHelpers.il")
     )
 )
 
-(procedure daisyRNAddBindingFromInstance(bindings inst)
-    println("daisyRNAddBindingFromInstance")
-    println(inst)
+(procedure daisyLAAddBindingFromInstance(bindings inst)
+    daisyLAlog(0 "daisyLAAddBindingFromInstance")
+    daisyLAlog(0 inst)
     
     ; Get terms
     ; Construct list
@@ -300,7 +379,7 @@ load("daisyLayoutAssistHelpers.il")
                 (foreach inst schematic_instances
                     terms = list()
                     (cond
-                        (daisyRNInstInTable(inst matched)
+                        (daisyLAInstInTable(inst matched)
                             printf("schematic instance matched - %s\n" inst)
                         )
                         (t
@@ -327,7 +406,7 @@ load("daisyLayoutAssistHelpers.il")
             
             println(pack)
             
-            println(daisyRNPackBinding(data pack))
+            println(daisyLAPackBinding(data pack))
             
             
             ;print(list(list("schematic" schematic_instances~>??) list("layout" layout_instances~>??) list("matched" matched) list("unmatched" unmatched_layout)) corrFile->port)
@@ -336,7 +415,7 @@ load("daisyLayoutAssistHelpers.il")
     )
 )
 
-(procedure daisyRNPopulateBindingsTreeWithData(data tree)
+(procedure daisyLAPopulateBindingsTreeWithData(data tree)
     hiTreeRemoveAllItems(tree)
 
     ; Add all schematic items
@@ -346,8 +425,8 @@ load("daisyLayoutAssistHelpers.il")
     ; If exists - reload
     ; If it does not populate with schematic and layout
     
-    (if !daisyRNSchWindowInData(data)
-        daisyRNOpenSchematic()
+    (if !daisyLASchWindowInData(data)
+        daisyLAOpenSchematic()
     )
     
     ; Add matched objects first
@@ -355,8 +434,8 @@ load("daisyLayoutAssistHelpers.il")
     ; Add unmatched layout
     
     (foreach instBind data->bindings->matched
-        schInst = daisyRNGetInstanceFromName(data->schWindow->cellView car(instBind))
-        layInst = daisyRNGetInstanceFromName(data->layoutWindow->cellView nth(1 instBind))
+        schInst = daisyLAGetInstanceFromName(data->schWindow->cellView car(instBind))
+        layInst = daisyLAGetInstanceFromName(data->layoutWindow->cellView nth(1 instBind))
         tmp = hiCreateTreeItem(gensym(schInst->name) list(schInst->name layInst->name schInst->cellName layInst->cellName "OK"))
         hiTreeAppendItem(tree tmp)
         ; Add both terminals
@@ -374,7 +453,7 @@ load("daisyLayoutAssistHelpers.il")
     )
     
     (foreach instBind data->bindings->unmatched_schematic
-        schInst = daisyRNGetInstanceFromName(data->schWindow->cellView car(instBind))
+        schInst = daisyLAGetInstanceFromName(data->schWindow->cellView car(instBind))
         tmp = hiCreateTreeItem(gensym(schInst->name) list(schInst->name "-" schInst->cellName "-" "NO"))
         hiTreeAppendItem(tree tmp)
         ; Add both terminals
@@ -386,7 +465,7 @@ load("daisyLayoutAssistHelpers.il")
     )
     
     (foreach instBind data->bindings->unmatched_layout
-        layInst = daisyRNGetInstanceFromName(data->layoutWindow->cellView car(cdr(instBind)))
+        layInst = daisyLAGetInstanceFromName(data->layoutWindow->cellView car(cdr(instBind)))
         tmp = hiCreateTreeItem(gensym(layInst->name) list("-" layInst->name "-" layInst->cellName "NO"))
         hiTreeAppendItem(tree tmp)
         ; Add both terminals
@@ -396,54 +475,16 @@ load("daisyLayoutAssistHelpers.il")
             hiTreeAppendItem(tmp2 hiCreateTreeItem(gensym(car(terms)) list("-" car(cdr(terms)) "" "" "")))
         )
     )
-    
-    /*(let ((instsSch data->schWindow->cellView->instances)
-        (instsLay data->layoutWindow->cellView->instances))
-        (foreach inst instsSch
-            tmp = hiCreateTreeItem(gensym(inst->name) list(inst->name "" inst->cellName "NO"))
-            hiTreeAppendItem(tree tmp)
-        )
-        (foreach inst instsLay            
-            tmp = hiCreateTreeItem(gensym(inst->name) list("" inst->name inst->cellName "NO"))
-            hiTreeAppendItem(tree tmp)
-        )
-    )*/
 )
 
-(procedure daisyRNPackBinding(data unpacked)
+(procedure daisyLAPackBinding(data unpacked)
     (let ((result list(list("matched" unpacked->matched) list("unmatched" list("schematic" unpacked->unmatched_schematic) list("layout" unpacked->unmatched_layout)))))
         result
     )
 )
 
-(procedure daisyRNUnpackBinding(data pack)
-    ; Unpack pack to a struct of the correct DPL
-    
-    (let (result)
-        result = ncons(nil)
-        (foreach subList car(pack)
-            (case car(subList)
-                ("matched"
-                    result->matched = car(cdr(subList))
-                )
-                ("unmatched"
-                    (if car(car(cdr(subList))) == "schematic" then
-                        result->unmatched_schematic = car(cdr(car(cdr(subList))))
-                        result->unmatched_layout = car(cdr(car(cdr(cdr(subList)))))
-                    else
-                        result->unmatched_schematic = car(cdr(car(cdr(cdr(subList)))))
-                        result->unmatched_layout = car(cdr(car(cdr(subList))))
-                    )
-                )
-            )
-        )
-        
-        result
-    )
-)
-
-(procedure daisyRNAutoBind()
-    println("daisyRNAutoBind")
+(procedure daisyLAAutoBind()
+    daisyLAlog(0 "daisyLAAutoBind")
     
     ; Ask for confirmation about rewrite?
     
@@ -461,7 +502,6 @@ load("daisyLayoutAssistHelpers.il")
         (let (matching (matchedTerms list()) (unmatched_schematic list()) (unmatched_layout list())) ; unmatched_layout is not used!
             (foreach layBinding data->bindings->unmatched_layout
                 matchedTerms = list()
-                ;println(layBinding)
                 (foreach schBinding data->bindings->unmatched_schematic
                     ; Check if bindings might match
                     (if car(schBinding) == nth(1 layBinding) then
@@ -490,7 +530,6 @@ load("daisyLayoutAssistHelpers.il")
                         ; Add unmatched schematic pins
                         unmatched_schematic = list()
                         (foreach schTerm nth(1 nth(2 schBinding))
-                            ;println(schTerm)
                             (let ((schTermMatched nil))
                                 (foreach layTerm nth(2 nth(2 layBinding))
                                     (if car(schTerm) == nth(1 layTerm) then
@@ -508,8 +547,8 @@ load("daisyLayoutAssistHelpers.il")
                         
                         data->bindings->matched = cons(list(car(schBinding) nth(1 layBinding) list(matchedTerms unmatched_schematic list())) data->bindings->matched)
         
-                        data->bindings->unmatched_schematic = daisyRNRemoveUnmatchedInstance(data->bindings->unmatched_schematic list(car(schBinding) nth(1 layBinding)))
-                        data->bindings->unmatched_layout = daisyRNRemoveUnmatchedInstance(data->bindings->unmatched_layout list(car(schBinding) nth(1 layBinding)))
+                        data->bindings->unmatched_schematic = daisyLARemoveUnmatchedInstance(data->bindings->unmatched_schematic list(car(schBinding) nth(1 layBinding)))
+                        data->bindings->unmatched_layout = daisyLARemoveUnmatchedInstance(data->bindings->unmatched_layout list(car(schBinding) nth(1 layBinding)))
                     else
                         println("No match")
                     )
@@ -519,7 +558,7 @@ load("daisyLayoutAssistHelpers.il")
     )
 )
 
-(procedure daisyRNInstInTable(instName table)
+(procedure daisyLAInstInTable(instName table)
     (let ((result nil))
         (foreach entry table
             (if car(entry) == instName
@@ -530,53 +569,23 @@ load("daisyLayoutAssistHelpers.il")
     )
 )
 
-/*(procedure daisyRNGenerateBindingTree()
-    ; Add bindings
-    (let ((insts daisyRNGetSchematicInstances(hiGetCurrentWindow()->cellView)))
-        (foreach inst insts
-            println(inst~>??)
-            /*println(net~>??)
-            println(net->name)
-            tmp = hiCreateTreeItem(gensym(net->name) list(net->name))
-            println(net->instTerms~>inst~>baseName)
-            hiTreeAppendItem(netTree tmp)
-            tmp2 = hiCreateTree(gensym(net->name))
-            hiItemInsertTree(tmp tmp2)
-            instTerms = list()
-            (foreach instTerm net->instTerms
-                ;(if !member(instTerm->inst->baseName instTerms) then
-                    println(instTerms)
-                    println(instTerm)
-                    instTerms = append(list(instTerm->inst->baseName) instTerms)
-                    hiTreeAppendItem(tmp2 hiCreateTreeItem(gensym(instTerm->inst->baseName) list(instTerm->inst->baseName instTerm->name "Not done" 13)))
-                ;)
-            )*
-        )
-    )
-)*/
-
-procedure( daisyRNOpenSchematic()
+procedure( daisyLAOpenSchematic()
     data = hiGetCurrentWindow()->data
-    (if !daisyRNSchWindowInData(data) then
+    (if !daisyLASchWindowInData(data) then
         data->schWindow = geOpen(
             ?lib geGetEditCellView()~>libName
             ?cell geGetEditCellView()~>cellName
             ?view "schematic"
             ?mode "r")
         data->schWindow->data = data
-        ;hiResizeWindow(data->schWindow list(1200:248 1410:1175))
         hiRaiseWindow(data->layoutWindow)
      else
          hiRaiseWindow(data->schWindow)
      )
 )
  
-(procedure daisyTransformBBox(bBox transform)
+(procedure daisyLATransformBBox(bBox transform)
     (let ((xy car(transform)) (R nth(1 transform)) (intbBox bBox))
-        /*(setq startX (car(lowerLeft(intbBox)) + car(xy)))
-        (setq startY (cadr(lowerLeft(intbBox)) + cadr(xy)))
-        (setq endX (car(upperRight(intbBox)) + car(xy)))
-        (setq endY (cadr(upperRight(intbBox)) + cadr(xy)))*/
         (setq startX car(lowerLeft(intbBox)))
         (setq startY cadr(lowerLeft(intbBox)))
         (setq endX   car(upperRight(intbBox)))
@@ -609,12 +618,8 @@ procedure( daisyRNOpenSchematic()
             )
         )
         
-        ;println(transform)
-        ;println(bBox)
-        ;println(intbBox)
-        
         (if !null(xy)
-            intbBox = daisyMoveBBoxOrigin(intbBox xy)
+            intbBox = daisyLAMoveBBoxOrigin(intbBox xy)
         )
         
         intbBox
@@ -622,7 +627,7 @@ procedure( daisyRNOpenSchematic()
 )
     
 ; Moves the bounding box (bBox) so the lower left corner is at xy
-(procedure daisyMoveBBoxOrigin(bBox xy)
+(procedure daisyLAMoveBBoxOrigin(bBox xy)
     (setq startX (car(lowerLeft(bBox)) + car(xy)))
     (setq startY (cadr(lowerLeft(bBox))  + cadr(xy)))
     (setq start list(startX startY))
@@ -633,45 +638,30 @@ procedure( daisyRNOpenSchematic()
     list(start end)
 )
  
-(procedure daisyRNDisplayLayoutInstances()
+(procedure daisyLADisplayLayoutInstances()
     ; Clear all markers first
     geHiDeleteAllMarker()
-    ;println( "You have clicked daisyRNDisplayLayoutInstances" )
     let( (layoutWindow layout)
            layoutWindow = hiGetCurrentWindow()
-           ;println(layoutWindow~>??)
            layout = layoutWindow->cellView
-           ;println(layout~>??)
         (setq hiliteset geCreateHilightSet(layout list("hilite" "drawing") t))
         hiliteset~>enable = t
         gePushHilightStack(hiliteset)
            foreach(inst layout->instances
-               ;println(inst->name)
-               ;println(inst->cellName)
-               ;println(inst->xy)
-               ;(setq instLocation)
                foreach(terminal inst->master->terminals
-                   ;println(terminal->name)
-                   ;println((car (car terminal->net->pins)->figs)->bBox)
                    (setq bBox (car (car terminal->net->pins)->figs)->bBox)
-                   geCreateMarkerByBBox(layout "warning" "daisy" "pin" terminal->name daisyTransformBBox(bBox inst->transform))
-                   geAddHilightLine(hiliteset list(list(0 0) centerBox(daisyTransformBBox(bBox inst->transform))))
+                   geCreateMarkerByBBox(layout "warning" "daisy" "pin" terminal->name daisyLATransformBBox(bBox inst->transform))
+                   geAddHilightLine(hiliteset list(list(0 0) centerBox(daisyLATransformBBox(bBox inst->transform))))
             )
         )
     )
 )
 
-procedure( daisyRNHighlightSchematicNet(schematic net)
-       ;geHiDeleteAllMarker()
+procedure( daisyLAHighlightSchematicNet(schematic net)
     (setq hiliteset geCreateHilightSet(schematic list("hilite" "drawing") nil))
     hiliteset~>enable = t
-    ;gePushHilightStack(hiliteset)
-    ;println(strcat("_" net->name "_"))
     
     foreach(fig net->figs
-        ;println(strcat("   " fig~>??))
-        ;println(fig~>??)
-        ;println(strcat("objType: " fig->objType))
         case( fig->objType
             ("line"
                 geAddHilightLine(hiliteset fig->bBox)
@@ -683,34 +673,34 @@ procedure( daisyRNHighlightSchematicNet(schematic net)
     )
 )
 
-(procedure daisyRNGetSchematicInstanceFromLayoutName(data layInstName)
+(procedure daisyLAGetSchematicInstanceFromLayoutName(data layInstName)
     (let ((result nil))
         (foreach binding data->bindings->matched
             (if nth(1 binding) == layInstName
-                result = daisyRNGetInstanceFromName(data->schWindow->cellView nth(0 binding))
+                result = daisyLAGetInstanceFromName(data->schWindow->cellView nth(0 binding))
             )
         )
         result
     )
 )
 
-(procedure daisyRNGetLayoutInstanceFromName(data cellView schInstName)
+(procedure daisyLAGetLayoutInstanceFromName(data cellView schInstName)
     (let ((result nil))
         (foreach binding data->bindings->matched
             (if nth(0 binding) == schInstName
-                result = daisyRNGetInstanceFromName(cellView nth(1 binding))
+                result = daisyLAGetInstanceFromName(cellView nth(1 binding))
             )
         )
         result
     )
 )
 
-(procedure daisyRNGetLayoutInstanceTermFromName(data layInst ischInstName schTermName)
+(procedure daisyLAGetLayoutInstanceTermFromName(data layInst ischInstName schTermName)
     (let ((result nil))
         (foreach binding data->bindings->matched
             (foreach term nth(0 nth(2 binding))
                 (if car(term) == schTermName
-                    result = daisyRNGetTermPinInMetalOrPoly(daisyRNGetInstanceTermFromName(layInst nth(1 term)))
+                    result = daisyLAGetTermPinInMetalOrPoly(daisyLAGetInstanceTermFromName(layInst nth(1 term)))
                 )
             )
         )
@@ -718,33 +708,27 @@ procedure( daisyRNHighlightSchematicNet(schematic net)
     )
 )
 
-(procedure daisyRNTraceTerm(instance termName @optional (clear t))
-    println("daisyRNTraceTerm")
-    ;println(instance~>??)
-    ;println(termName)
+(procedure daisyLATraceTerm(instance termName @optional (clear t))
+    daisyLAlog(0 "daisyLATraceTerm")
     
-    ; Check so we are in layout
+    ; TODO Check so we are in layout
     (if clear
         clearAllHighlights()
     )
-    ; Only Metals and poly!!!
+    ; TODO Only Metals and poly!!!
     
-    (if instance->objType == "inst" then
-        ;println(instance~>??)
-        ;println(daisyRNGetInstanceTermFromName(instance termName)~>??)
-        
+    (if instance->objType == "inst" then        
         hiliteSet = geCreateHilightSet(hiGetCurrentWindow()->cellView list("hilite" "drawing2") nil)
         hiliteSet->enable = t
         
-        (let ((term daisyRNGetInstanceTermFromName(instance termName)) (bBoxes list()))
+        (let ((term daisyLAGetInstanceTermFromName(instance termName)) (bBoxes list()))
             exploredInstances = list(instance)
             
-            ;println(term)
-            (foreach fig daisyRNGetTermPinInMetalOrPoly(term)
-                bBox = daisyRNGetViewBBoxForTerminal(hiGetCurrentWindow()->cellView fig instance)
+            (foreach fig daisyLAGetTermPinInMetalOrPoly(term)
+                bBox = daisyLAGetViewBBoxForTerminal(hiGetCurrentWindow()->cellView fig instance)
                 
-                geAddHilightRectangle(hiliteSet daisyTransformBBox(bBox instance->transform))
-                daisyRNTraceNetInst(hiGetCurrentWindow()->cellView fig->layerName daisyTransformBBox(bBox instance->transform) instance fig exploredInstances hiliteSet 20)
+                geAddHilightRectangle(hiliteSet daisyLATransformBBox(bBox instance->transform))
+                daisyLATraceNetInst(hiGetCurrentWindow()->cellView fig->layerName daisyLATransformBBox(bBox instance->transform) instance fig exploredInstances hiliteSet 20)
             )
         )
     else
@@ -753,13 +737,13 @@ procedure( daisyRNHighlightSchematicNet(schematic net)
     "DONE"
 )
 
-(procedure daisyRNTraceNet()
-    printf("daisyRNTraceNet\n")
+(procedure daisyLATraceNet()
+    printf("daisyLATraceNet\n")
     instance = car(geGetSelSet()) ; Limited to one object for now
-    daisyRNTraceTerm(instance "S")
+    daisyLATraceTerm(instance "S")
 )
 
-procedure( daisyRNIsBoundingBoxesOverlap(bBox1, bBox2)
+procedure( daisyLAIsBoundingBoxesOverlap(bBox1, bBox2)
     
     (cond
         (car(upperRight(bBox1)) < car(lowerLeft(bBox2))
@@ -780,19 +764,14 @@ procedure( daisyRNIsBoundingBoxesOverlap(bBox1, bBox2)
     )
 )
 
-(procedure daisyRNIsIntersecting(inst1 inst2 layerName @optional (inst1_xy_offset list(0 0)) (inst2_xy_offset list(0 0)))
-    ;println("daisyRNIsIntersecting")
+(procedure daisyLAIsIntersecting(inst1 inst2 layerName @optional (inst1_xy_offset list(0 0)) (inst2_xy_offset list(0 0)))
+    daisyLAlog(0 "daisyLAIsIntersecting")
     
     ; Bounding box overlap?
     (cond
         ; lowerLeft 
-        (daisyRNIsBoundingBoxesOverlap(daisyTransformBBox(inst1->bBox inst1->transform) daisyMoveBBoxOrigin(inst2->bBox inst2_xy_offset))
-            ;println("Bounding boxes overlap.")
-            ; Check more carefully
-            ;println(list(daisyRNGetPointsFromInstance(inst1)))
-            ;println(list(daisyRNGetPointsFromInstance(inst2)))
-            ;println(dbPointArrayAnd(inst1->cellView list(daisyRNGetPointsFromInstance(inst1)) list(daisyRNGetPointsFromInstance(inst2))))
-            (let ((points1 daisyRNMovePointsXY(list(daisyRNGetPointsFromInstance(inst1)) inst1_xy_offset)) (points2 list(daisyRNGetPointsFromInstance(inst2))))
+        (daisyLAIsBoundingBoxesOverlap(daisyLATransformBBox(inst1->bBox inst1->transform) daisyLAMoveBBoxOrigin(inst2->bBox inst2_xy_offset))
+            (let ((points1 daisyLAMovePointsXY(list(daisyLAGetPointsFromInstance(inst1)) inst1_xy_offset)) (points2 list(daisyLAGetPointsFromInstance(inst2))))
                 (cond
                     (!null(points1) && !null(points2)
                         t
@@ -812,7 +791,7 @@ procedure( daisyRNIsBoundingBoxesOverlap(bBox1, bBox2)
     )
 )
 
-procedure( daisyRNGetEdgesFromPoints(points)
+procedure( daisyLAGetEdgesFromPoints(points)
     (let ((edges list()))
         (for i 1 length(points)-1
             edges = append(list(list(car(points) car(cdr(points)))) edges)
@@ -826,5 +805,5 @@ procedure( daisyRNGetEdgesFromPoints(points)
      
 deUnRegUserTriggers("schematic")
 deUnRegUserTriggers("maskLayout")
-deRegUserTriggers("schematic" nil nil 'MyMenu)
-deRegUserTriggers("maskLayout" nil nil 'MyMenu)  
+deRegUserTriggers("schematic" nil nil 'daisyLAMenu)
+deRegUserTriggers("maskLayout" nil nil 'daisyLAMenu)  

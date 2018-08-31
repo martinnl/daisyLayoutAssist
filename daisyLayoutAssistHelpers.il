@@ -1,6 +1,40 @@
+/* functionName(para1, para2)
+ * Parameters
+ * - para1
+ * - para2
+ *
+ * Description
+ */
+
+/** daisyLAlog(level message)
+ * Parameters
+ * - level: what is printed is set by the level set at start-up
+ *      0 - debug
+ *      1 - info
+ *      2 - warn
+ *      3 - error
+ *      4 - fatal
+ * - message: message to be printed
+ *
+ * Description
+ *
+ * TODO
+ * - add level to start-up
+ */
+procedure( daisyLAlog(level message)
+    ; TODO For now everything is printed
+    print("LA:: ")
+    println(message)
+ )
 
 
-procedure( daisyRNGetSchematicFromLayout(layout)
+/************************************************************************
+ * Fixed above
+ * TODO Fix below
+ ***********************************************************************/
+
+
+procedure( daisyLAGetSchematicFromLayout(layout)
     (let (libName cellName)
         libName = layout->cellView->libName
         cellName = layout->cellView->cellName
@@ -9,13 +43,11 @@ procedure( daisyRNGetSchematicFromLayout(layout)
     )
 )
 
-procedure( daisyRNGetInstanceFromName(cellView instName)
-    ;printf("daisyRNGetInstanceFromName\n")
+procedure( daisyLAGetInstanceFromName(cellView instName)
+    daisyLAlog(0 "daisyLAGetInstanceFromName\n")
     (let (returnInstance)
         (foreach inst cellView->instances
-            ;println(inst~>??)
             (if inst->name == instName then
-                ;println(inst~>??)
                 returnInstance = inst
             )
         )
@@ -23,11 +55,9 @@ procedure( daisyRNGetInstanceFromName(cellView instName)
     )
 )
 
-procedure( daisyRNGetInstanceTermFromName(inst termName)
-    ;printf("daisyRNGetInstanceTermFromName\n")
+procedure( daisyLAGetInstanceTermFromName(inst termName)
+    daisyLAlog(0 "daisyLAGetInstanceTermFromName\n")
     ; Check if layout or schematic?
-    ;println(inst~>??)
-    ;println(termName)
     (let (returnTerm)
         ;println(inst->master~>??)
         ;(foreach term inst->instTerms
@@ -42,8 +72,8 @@ procedure( daisyRNGetInstanceTermFromName(inst termName)
     )
 )
 
-; TODO Fix daisyRNbBoxToPoints
-procedure( daisyRNbBoxToPoints(bBox)
+; TODO Fix daisyLAbBoxToPoints
+procedure( daisyLAbBoxToPoints(bBox)
     ;let( ((points list()))
     ;    points = append(points lowerLeft(bBox)
     ;)
@@ -52,10 +82,8 @@ procedure( daisyRNbBoxToPoints(bBox)
 )
 
 ; TODO Add better check for valid layers
-(procedure daisyRNGetTermPinInMetalOrPoly(term)
-    ;printf("daisyRNGetTermPinInMetal\n")
-    ;println(term~>??)
-    ;println(term~>pins~>figs~>??)
+(procedure daisyLAGetTermPinInMetalOrPoly(term)
+    daisyLAlog(0 "daisyLAGetTermPinInMetal\n")
     (let ((metalFigs list()))
         (foreach pin term->pins
             (foreach fig pin->figs
@@ -74,8 +102,8 @@ procedure( daisyRNbBoxToPoints(bBox)
 )
 
 ; TODO Should it remember parentInst or term? Or bBox? Or?
-(procedure daisyRNTraceNetInst(cellView layerName bBox parentInst parentFig exploredInstances hiliteSet depth)
-    println("daisyRNTraceNetInst")
+(procedure daisyLATraceNetInst(cellView layerName bBox parentInst parentFig exploredInstances hiliteSet depth)
+    daisyLAlog(0 "daisyLATraceNetInst")
     ;printf("explored0: %d\n" length(exploredInstances))
     
     (cond
@@ -98,7 +126,7 @@ procedure( daisyRNbBoxToPoints(bBox)
                 ;println("Already a member?")
                 ;println(member(overlap exploredInstances))
                 ; Check if parentInst is polygon, if it is then doublecheck overlap with special function
-                (if parentInst->objType != "polygon" || daisyRNIsIntersecting(overlap parentFig layerName) then
+                (if parentInst->objType != "polygon" || daisyLAIsIntersecting(overlap parentFig layerName) then
                     (cond
                         (!listp(exploredInstances)
                             println("exploredInstances is not a list!!!")
@@ -119,7 +147,7 @@ procedure( daisyRNbBoxToPoints(bBox)
                                         exploredInstances = append(list(overlap) exploredInstances)
                                         ;println(overlap~>??)
                                         geAddHilightRectangle(hiliteSet overlap->bBox)
-                                        exploredInstances = daisyRNTraceNetInst(cellView layerName overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
+                                        exploredInstances = daisyLATraceNetInst(cellView layerName overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
                                     )
                                 )
                                 ("stdVia"
@@ -131,13 +159,13 @@ procedure( daisyRNbBoxToPoints(bBox)
                                             exploredInstances = append(list(overlap) exploredInstances)
                                             ;println(overlap~>??)
                                             geAddHilightRectangle(hiliteSet overlap->bBox)
-                                            exploredInstances = daisyRNTraceNetInst(cellView overlap->viaHeader->viaDef->layer2->name overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
+                                            exploredInstances = daisyLATraceNetInst(cellView overlap->viaHeader->viaDef->layer2->name overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
                                         )
                                         (overlap->viaHeader->viaDef->layer2->name == layerName
                                             exploredInstances = append(list(overlap) exploredInstances)
                                             ;println(overlap~>??)
                                             geAddHilightRectangle(hiliteSet overlap->bBox)
-                                            exploredInstances = daisyRNTraceNetInst(cellView overlap->viaHeader->viaDef->layer1->name overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
+                                            exploredInstances = daisyLATraceNetInst(cellView overlap->viaHeader->viaDef->layer1->name overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
                                         )
                                         (t
                                             ; Not the correct via, ignore if for now since it might be used later
@@ -154,12 +182,12 @@ procedure( daisyRNbBoxToPoints(bBox)
                                     ;println(parentInst~>??)
                                     ;println(layerName)
                                     ;println("Is intersecting????")
-                                    (if overlap->layerName == layerName && daisyRNIsIntersecting(overlap parentInst layerName) then
+                                    (if overlap->layerName == layerName && daisyLAIsIntersecting(overlap parentInst layerName) then
                                         ;println("Is intersecting")
                                         exploredInstances = append(list(overlap) exploredInstances)
                                         ;println(overlap~>??)
                                         geAddHilightPolygon(hiliteSet overlap->points)
-                                        exploredInstances = daisyRNTraceNetInst(cellView layerName overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
+                                        exploredInstances = daisyLATraceNetInst(cellView layerName overlap->bBox overlap overlap exploredInstances hiliteSet depth-1)
                                     )
                                 )
                                 ("inst"
@@ -170,11 +198,11 @@ procedure( daisyRNbBoxToPoints(bBox)
                                     (let ((isOverlapping nil))
                                         (foreach term overlap->master->terminals
                                             ;println(term~>??)
-                                            metalFigs = daisyRNGetTermPinInMetalOrPoly(term)
+                                            metalFigs = daisyLAGetTermPinInMetalOrPoly(term)
                                             (foreach fig metalFigs
                                                 ;println(fig~>??)
                                                 (if fig->layerName == layerName then
-                                                    (if daisyRNIsIntersecting(fig parentFig layerName overlap->xy) then
+                                                    (if daisyLAIsIntersecting(fig parentFig layerName overlap->xy) then
                                                         ;println("It is intersecting!")
                                                         (if !isOverlapping then
                                                             isOverlapping = t
@@ -183,8 +211,8 @@ procedure( daisyRNbBoxToPoints(bBox)
                                                             ;println(exploredInstances~>??)
                                                         )
                                                         ;println(fig~>??)
-                                                        geAddHilightRectangle(hiliteSet daisyTransformBBox(fig->bBox overlap->transform))
-                                                        exploredInstances = daisyRNTraceNetInst(cellView layerName daisyTransformBBox(fig->bBox overlap->transform) overlap fig exploredInstances hiliteSet depth-1)
+                                                        geAddHilightRectangle(hiliteSet daisyLATransformBBox(fig->bBox overlap->transform))
+                                                        exploredInstances = daisyLATraceNetInst(cellView layerName daisyLATransformBBox(fig->bBox overlap->transform) overlap fig exploredInstances hiliteSet depth-1)
                                                         ;exploredInstances
                                                     )
                                                 )
@@ -208,7 +236,7 @@ procedure( daisyRNbBoxToPoints(bBox)
     )    
 )
 
-procedure( daisyRNMovePointsXY(points xy)
+procedure( daisyLAMovePointsXY(points xy)
     (cond
         (null(points)
             list()
@@ -218,19 +246,19 @@ procedure( daisyRNMovePointsXY(points xy)
         )
         (listp(points) && listp(car(points))
             ; List in list
-            cons(daisyRNMovePointsXY(car(points) xy) daisyRNMovePointsXY(cdr(points) xy))
+            cons(daisyLAMovePointsXY(car(points) xy) daisyLAMovePointsXY(cdr(points) xy))
         )
         (listp(points)
-            daisyRNMovePointXY(points xy)
+            daisyLAMovePointXY(points xy)
         )
         (t
-            println("It should never reach this statement in daisyRNMovePointsXY.")
+            println("It should never reach this statement in daisyLAMovePointsXY.")
         )
     )
 )
 
 ; Returns the points of the closed polygon forming an instance
-procedure( daisyRNGetPointsFromInstance(inst)
+procedure( daisyLAGetPointsFromInstance(inst)
     (case inst->objType
         ("rect" || "path" || "pathSeg"
             list(lowerLeft(inst->bBox) list(car(upperRight(inst->bBox)) car(cdr(lowerLeft(inst->bBox)))) upperRight(inst->bBox) list(car(lowerLeft(inst->bBox)) car(cdr(upperRight(inst->bBox)))) lowerLeft(inst->bBox))
@@ -245,8 +273,8 @@ procedure( daisyRNGetPointsFromInstance(inst)
 )
 
 ; TODO Add termFilter
-(procedure daisyRNHighlightdaisyRNForSelectedInstances(@optional (termFilter "") (clear t))
-    printf("daisyRNHighlightdaisyRNForSelectedInstances\n")
+(procedure daisyLAHighlightdaisyLAForSelectedInstances(@optional (termFilter "") (clear t))
+    printf("daisyLAHighlightdaisyLAForSelectedInstances\n")
     data = hiGetCurrentWindow()->data
     (if clear
         clearAllHighlights()
@@ -266,12 +294,12 @@ procedure( daisyRNGetPointsFromInstance(inst)
             )
             (foreach inst instances
                 ; TODO Refactor
-                schInst = daisyRNGetSchematicInstanceFromLayoutName(data inst->name)
+                schInst = daisyLAGetSchematicInstanceFromLayoutName(data inst->name)
                 
                 (if null(schInst) then
                     printf("No corresponding schematic instance.\n")
                 )
-                layInst = daisyRNGetInstanceFromName(window->cellView inst->name)
+                layInst = daisyLAGetInstanceFromName(window->cellView inst->name)
                 ; Find connected nets and print
                 (foreach conn schInst->conns
                     ;printf("hilitePurpose: %s\n" hilitePurposes)
@@ -285,15 +313,15 @@ procedure( daisyRNGetPointsFromInstance(inst)
                     ;println(conn->name)
                     ;println(conn->net->name)
                     
-                    (setq layMainTerm daisyRNGetInstanceTermFromName(layInst conn->name))
+                    (setq layMainTerm daisyLAGetInstanceTermFromName(layInst conn->name))
                     ;println(layMainTerm~>??)
                     
                     (foreach term conn->net->allInstTerms
                         (if (term->name != "noConn" && !null(layMainTerm) && layInst->name != term->inst->name) then
                             ;println(strcat("Connected to " term->inst->name))
-                            (setq layConnInst daisyRNGetLayoutInstanceFromName(data data->layoutWindow->cellView term->inst->name))
-                            (setq layTerm daisyRNGetLayoutInstanceTermFromName(data layConnInst term->inst->name term->name))
-                            ;daisyRNGetViewBBoxForTerminal(window->cellView car(layTerm->pins~>fig) layConnInst)
+                            (setq layConnInst daisyLAGetLayoutInstanceFromName(data data->layoutWindow->cellView term->inst->name))
+                            (setq layTerm daisyLAGetLayoutInstanceTermFromName(data layConnInst term->inst->name term->name))
+                            ;daisyLAGetViewBBoxForTerminal(window->cellView car(layTerm->pins~>fig) layConnInst)
                             
                             ;printf("term name: %s\n" term->name)
                             (if null(layTerm) || null(layConnInst) then
@@ -311,8 +339,8 @@ procedure( daisyRNGetPointsFromInstance(inst)
                                 geAddHilightLine(
                                     hiliteset
                                     list(
-                                        centerBox(daisyMoveBBoxOrigin(car(layMainTerm->pins~>fig)->bBox layInst->xy))
-                                        centerBox(daisyMoveBBoxOrigin(car(layTerm)->bBox layConnInst->xy))
+                                        centerBox(daisyLAMoveBBoxOrigin(car(layMainTerm->pins~>fig)->bBox layInst->xy))
+                                        centerBox(daisyLAMoveBBoxOrigin(car(layTerm)->bBox layConnInst->xy))
                                     )
                                 )
                             )
@@ -337,11 +365,11 @@ procedure( clearAllHighlights()
         )
 )
 
-procedure( daisyRNMovePointXY(point xy)
+procedure( daisyLAMovePointXY(point xy)
     list((car(point) + car(xy)) (car(cdr(point)) + car(cdr(xy))))
 )
 
-(procedure daisyRNGetViewBBoxForTerminal(layout termFig inst)
+(procedure daisyLAGetViewBBoxForTerminal(layout termFig inst)
        ;println(termFig)
        (setq bBox termFig->bBox)
 

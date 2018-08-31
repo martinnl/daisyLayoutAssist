@@ -1,0 +1,6 @@
+daisy/bin/config.sh
+*.log
+*~
+*.swp
+*#
+docs/doxygen

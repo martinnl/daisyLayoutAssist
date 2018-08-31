@@ -1,16 +1,22 @@
+/* functionName(para1, para2)
+ * Parameters
+ * - para1
+ * - para2
+ *
+ * Description
+ *
+ * T1ODO
+ * - 
+ */
 
 
-; create callback, which is called whenever any tree items are selected and which
-; prints the selected item's description
-(procedure treeCB(name itemSymList)
-    while(itemSymList
-        itemSym=car(itemSymList)
-        println(hiGetTreeItemDescription(eval(itemSym)))
-        itemSymList=cdr(itemSymList)
-    )
-)
+/************************************************************************
+ * Fixed above
+ * TODO Fix below
+ ***********************************************************************/
+
     
-(procedure daisyRNBindInstances(tree treeField)
+(procedure daisyLABindInstances(tree treeField)
     data = hiGetCurrentWindow()->data
     selItems = hiTreeTableGetSelectedItems(treeField)
     selItemsCount = hiTreeTableGetSelectedItemCount(treeField)
@@ -49,9 +55,9 @@
                         ; Create form to map pins
                         ; Display form and get result
                         ; Store in bindings and regenerate tree
-                        schTerms = nth(1 daisyRNFindTermsInMatchedBindingsFromInstName(data->bindings->unmatched_schematic nth(0 schDesc)))
-                        layTerms = nth(2 daisyRNFindTermsInMatchedBindingsFromInstName(data->bindings->unmatched_layout nth(1 layDesc)))
-                        (if daisyRNCreateAndDisplayBindingWindow(data schDesc layDesc list() schTerms layTerms tree)
+                        schTerms = nth(1 daisyLAFindTermsInMatchedBindingsFromInstName(data->bindings->unmatched_schematic nth(0 schDesc)))
+                        layTerms = nth(2 daisyLAFindTermsInMatchedBindingsFromInstName(data->bindings->unmatched_layout nth(1 layDesc)))
+                        (if daisyLACreateAndDisplayBindingWindow(data schDesc layDesc list() schTerms layTerms tree)
                             println("DONE")
                         )
                     )
@@ -78,12 +84,12 @@
                         ; Display form and get result
                         ; Store in bindings and regenerate tree
     
-                        terms = daisyRNFindTermsInMatchedBindingsFromInstName(data->bindings->matched nth(0 desc))
+                        terms = daisyLAFindTermsInMatchedBindingsFromInstName(data->bindings->matched nth(0 desc))
                         println(terms)
                         matchedTerms = nth(0 terms)
                         schTerms = nth(1 terms)
                         layTerms = nth(2 terms)
-                        (if daisyRNCreateAndDisplayBindingWindow(data desc nil matchedTerms schTerms layTerms tree)
+                        (if daisyLACreateAndDisplayBindingWindow(data desc nil matchedTerms schTerms layTerms tree)
                             println("DONE")
                         )
                     )
@@ -93,7 +99,7 @@
     )
 )
 
-(procedure daisyRNBindingFormBindTermsCB(form)
+(procedure daisyLABindingFormBindTermsCB(form)
     schTermsValue = car(form->schTermsField->value)
     layTermsValue = car(form->layTermsField->value)
     
@@ -103,7 +109,7 @@
     form->bindedTermsField->choices = append(list(sprintf(nil "%s %s" schTermsValue layTermsValue)) form->bindedTermsField->choices)
 )
 
-(procedure daisyRNBindingFormUnbindTermsCB(form)
+(procedure daisyLABindingFormUnbindTermsCB(form)
     bindingTermsValue = car(form->bindedTermsField->value)
     terms = parseString(bindingTermsValue " ")
     schTermValue = nth(0 terms)
@@ -115,7 +121,7 @@
     form->layTermsField->choices = cons(layTermValue form->layTermsField->choices)
 )
 
-(procedure daisyRNReplaceBinding(bindings newBinding)
+(procedure daisyLAReplaceBinding(bindings newBinding)
     (let ((result list()))
         (foreach binding bindings
             (cond
@@ -133,7 +139,7 @@
     )
 )
 
-(procedure daisyRNRemoveMatchedInstance(bindings instName)
+(procedure daisyLARemoveMatchedInstance(bindings instName)
     matched = bindings->matched
     println(matched)
     (let ((stillMatched list()))
@@ -158,20 +164,17 @@
     )
 )
 
-(procedure daisyRNPopulateNetsTreeView(netTree)
+(procedure daisyLAPopulateNetsTreeView(netTree)
     ; Add nets
-    (let ((nets daisyRNGetSchematicFromLayout(hiGetCurrentWindow()->cellView)->nets))
+    (let ((nets daisyLAGetSchematicFromLayout(hiGetCurrentWindow()->cellView)->nets))
         (foreach net nets
-            println(net~>??)
-            println(net->name)
             tmp = hiCreateTreeItem(gensym(net->name) list(net->name))
-            println(net->instTerms~>inst~>baseName)
             hiTreeAppendItem(netTree tmp)
             tmp2 = hiCreateTree(gensym(net->name))
             hiItemInsertTree(tmp tmp2)
             instTerms = list()
             (foreach instTerm net->instTerms
-                ;(if !member(instTerm->inst->baseName instTerms) then
+                ;(if !member(instTerm->inst->baseName instTerms) then TODO ?
                     println(instTerms)
                     println(instTerm)
                     instTerms = append(list(instTerm->inst->baseName) instTerms)
@@ -183,7 +186,7 @@
 )
 ; TODO Unbind instances
 
-(procedure daisyRNNetTreeCB(name itemSymList)
+(procedure daisyLANetTreeCB(name itemSymList)
     geDeselectAll(hiGetCurrentWindow())
     clearAllHighlights()
     
@@ -208,13 +211,13 @@
                  ; Highlight instance name
                  println(hiGetCurrentWindow()->cellView->instances)
                  
-                 layInst = daisyRNGetLayoutInstanceFromName(data data->layoutWindow->cellView instName)
+                 layInst = daisyLAGetLayoutInstanceFromName(data data->layoutWindow->cellView instName)
                 geSelectObject(layInst)
                 leZoomToSelSet() ; Zoom to instance
                 hiZoomRelativeScale(hiGetCurrentWindow() 0.7)
              
-                daisyRNHighlightdaisyRNForSelectedInstances(instTerm nil)
-                daisyRNTraceTerm(layInst instTerm nil)
+                daisyLAHighlightdaisyLAForSelectedInstances(instTerm nil)
+                daisyLATraceTerm(layInst instTerm nil)
              )
              ( 1
                  ; Net - TODO Highlight all terminals that belongs to net and draw flighlines
@@ -228,11 +231,11 @@
      )
 )
 
-(procedure daisyRNBindingTreeCB(name itemSymList)
+(procedure daisyLABindingTreeCB(name itemSymList)
     data = hiGetCurrentWindow()->data
     geDeselectAll(data->layoutWindow)
     
-    (if daisyRNSchWindowInData(data)
+    (if daisyLASchWindowInData(data)
         geDeselectAll(data->schWindow)
     )
     
@@ -263,8 +266,8 @@
             layTermFilter = "" ; No filter if we select instance
         )
         
-        (if schInstName != "-" && schInstName != "" && daisyRNSchWindowInData(data) then
-            schInst = daisyRNGetInstanceFromName(data->schWindow->cellView schInstName)
+        (if schInstName != "-" && schInstName != "" && daisyLASchWindowInData(data) then
+            schInst = daisyLAGetInstanceFromName(data->schWindow->cellView schInstName)
             hiRaiseWindow(data->schWindow)
             hiSetCurrentWindow(data->schWindow)
             geSelectObject(schInst)
@@ -273,19 +276,19 @@
             hiSetCurrentWindow(data->layoutWindow)
             
             ; TODO Add highlight for schematic
-            ;daisyRNHighlightdaisyRNForSelectedInstances(schTermFilter nil)
-            ;daisyRNTraceTerm(schInst schTermFilter nil)
+            ;daisyLAHighlightdaisyLAForSelectedInstances(schTermFilter nil)
+            ;daisyLATraceTerm(schInst schTermFilter nil)
         )
         
         (if layInstName != "-" then
-            layInst = daisyRNGetInstanceFromName(data->layoutWindow->cellView layInstName)
+            layInst = daisyLAGetInstanceFromName(data->layoutWindow->cellView layInstName)
             (if !null(layInst) then
                 geSelectObject(layInst)
                 leZoomToSelSet(data->layoutWindow) ; Zoom to instance
                 hiZoomRelativeScale(data->layoutWindow 0.7)
                 
-                daisyRNHighlightdaisyRNForSelectedInstances(layTermFilter t)
-                daisyRNTraceTerm(layInst layTermFilter nil)
+                daisyLAHighlightdaisyLAForSelectedInstances(layTermFilter t)
+                daisyLATraceTerm(layInst layTermFilter nil)
             )
         )
         
@@ -293,16 +296,13 @@
     )
 )
 
-(procedure daisyRNResetBindings(tree)
-    println(tree~>??)
-    
+(procedure daisyLAResetBindings(tree)    
     data = hiGetCurrentWindow()->data
-    ;data->binding = list()
     
     hiTreeRemoveAllItems(tree)
     
-    (if !daisyRNSchWindowInData(data)
-        daisyRNOpenSchematic()
+    (if !daisyLASchWindowInData(data)
+        daisyLAOpenSchematic()
     )
     
     libName = data->libName
@@ -376,16 +376,16 @@
         data->bindings->unmatched_layout = unmatched_layout
     )
     
-    daisyRNPopulateBindingsTreeWithData(data tree)
+    daisyLAPopulateBindingsTreeWithData(data tree)
 )
 
-(procedure daisyRNSaveBinding(data tree)
-    println("daisyRNSaveBinding")
+(procedure daisyLASaveBinding(data tree)
+    daisyLAlog(0 "daisyLASaveBinding")
     
     libName = data->libName
     cellName = data->cellName
     
-    packed = daisyRNPackBinding(data data->bindings)
+    packed = daisyLAPackBinding(data data->bindings)
     
     corrFile = abOpenTextCellView(libName cellName "conn2" "w") ; Change to read/write and read whatever is defined there first
     
@@ -396,47 +396,24 @@
     packed
 )
 
-(procedure daisyRNSaveBindingButtonCB(tree)
+(procedure daisyLASaveBindingButtonCB(tree)
     data = hiGetCurrentWindow()->data
     
-    daisyRNSaveBinding(data tree)
+    daisyLASaveBinding(data tree)
 )
 
-(procedure daisyRNLoadBindingButtonCB(tree)
+(procedure daisyLALoadBindingButtonCB(tree)
     data = hiGetCurrentWindow()->data
     
-    daisyRNLoadBinding(data tree)
+    daisyLALoadBinding(data tree)
 )
 
-(procedure daisyRNLoadBinding(data tree)
-    println("daisyRNLoadBinding")
-    
-    libName = data->libName
-    cellName = data->cellName
-    
-    corrFile = abOpenTextCellView(libName cellName "conn2" "r") ; Change to read/write and read whatever is defined there first
-    
-    line = lineread(corrFile->port)
-    
-    println(line)
-    
-    unpacked = daisyRNUnpackBinding(data line)
-        
-    abCloseTextCellView(corrFile)
-    
-    data->bindings = unpacked
-    
-    daisyRNPopulateBindingsTreeWithData(data tree)    
-    
-    unpacked
+(procedure daisyLAAutoBindCB(tree)
+    daisyLAAutoBind()
+    daisyLAPopulateBindingsTreeWithData(hiGetCurrentWindow()->data tree)
 )
 
-(procedure daisyRNAutoBindCB(tree)
-    daisyRNAutoBind()
-    daisyRNPopulateBindingsTreeWithData(hiGetCurrentWindow()->data tree)
-)
-
-(procedure daisyRNDockForm()
+(procedure daisyLADockForm()
     hiGetCurrentWindow()->data = ncons(nil)
     hiGetCurrentWindow()->data->layoutWindow = hiGetCurrentWindow()
     hiGetCurrentWindow()->data->libName = hiGetCurrentWindow()->data->layoutWindow->cellView->libName
@@ -453,9 +430,9 @@
         indexTree=hiCreateTree('index)
 
         ; Populate the tree with nets
-        daisyRNPopulateNetsTreeView(indexTree)
+        daisyLAPopulateNetsTreeView(indexTree)
         
-        ;bindingTree = daisyRNGenerateBindingTree()
+        ;bindingTree = daisyLAGenerateBindingTree()
         bindingTree = hiCreateTree('bindings)
         bindingTree->data = data
 
@@ -471,7 +448,7 @@
                         list("Unconn"   60    'right    `int)
             )
             ?choice indexTree
-            ?callback "daisyRNNetTreeCB"
+            ?callback "daisyLANetTreeCB"
         )
         
         bindingTreeField = hiCreateTreeTable(
@@ -486,15 +463,15 @@
                         list("Binded"    40    'right    `string)
             )
             ?sort list(0 t)
-            ?sortCallback "daisyRNBindingTreeSortCB"
+            ?sortCallback "daisyLABindingTreeSortCB"
             ?choice bindingTree
-            ?callback "daisyRNBindingTreeCB"
+            ?callback "daisyLABindingTreeCB"
         )
         
         readInSchematicButton = hiCreateButton(
             ?name     `readInSchematicButton
             ?buttonText    "Read sch"
-            ?callback "daisyRNPopulateNetsTreeView(treeField)"
+            ?callback "daisyLAPopulateNetsTreeView(treeField)"
         )
         
         loadFileButton = hiCreateButton(
@@ -505,43 +482,43 @@
         resetBindingsButton = hiCreateButton(
             ?name        `resetBindingsButton
             ?buttonText    "Reset"
-            ?callback    "daisyRNResetBindings(bindingTree)"
+            ?callback    "daisyLAResetBindings(bindingTree)"
         )
         
         openSchematicButton = hiCreateButton(
             ?name        `openSchematicButton
             ?buttonText    "Schematic"
-            ?callback    "daisyRNOpenSchematic"
+            ?callback    "daisyLAOpenSchematic"
         )
         
         autoBindButton = hiCreateButton(
             ?name       `autoBindButton
             ?buttonText "Auto bind"
-            ?callback   "daisyRNAutoBindCB(bindingTree)"
+            ?callback   "daisyLAAutoBindCB(bindingTree)"
         )
         
         bindInstancesButton = hiCreateButton(
             ?name       `bindInstancesButton
             ?buttonText "Bind"
-            ?callback   "daisyRNBindInstances(bindingTree bindingTreeField)"
+            ?callback   "daisyLABindInstances(bindingTree bindingTreeField)"
         )
         
         unbindInstancesButton = hiCreateButton(
             ?name       `unbindInstancesButton
             ?buttonText "Unbind"
-            ?callback   "daisyRNUnbindInstances(bindingTree bindingTreeField)"
+            ?callback   "daisyLAUnbindInstances(bindingTree bindingTreeField)"
         )
         
         saveBindingsButton = hiCreateButton(
             ?name          `saveBindingsButton
             ?buttonText    "Save bindings"
-            ?callback      "daisyRNSaveBindingButtonCB(tree)"
+            ?callback      "daisyLASaveBindingButtonCB(tree)"
         )
         
         loadBindingButton = hiCreateButton(
             ?name     `loadBindingButton
             ?buttonText "Load binding"
-            ?callback "daisyRNLoadBindingButtonCB(bindingTree)"
+            ?callback "daisyLALoadBindingButtonCB(bindingTree)"
         )
         
         tabField = hiCreateTabField(
@@ -565,7 +542,7 @@
         )
 
         swin = hiGetSessionWindow(hiGetCurrentWindow())
-        daisyRNAppForm = hiCreateAppForm(
+        daisyLAAppForm = hiCreateAppForm(
                   ?name        gensym('myForm)
             ?formTitle    "Daisy Ratsnest which should be docked"
             ;?buttonLayout   'Close
@@ -577,45 +554,46 @@
                     )
             ?unmapAfterCB   t)
             
-        daisyRNDockForm = hiCreateDockWindow(
+        daisyLADockForm = hiCreateDockWindow(
             ?appType    "Daisy Ratsnest"
             ?widgetType    "form"
             ?handle    'dockedForm
             ?title        "Daisy Ratsnest"
             ?dockSizeHint list(280 280)
-            ?form        daisyRNAppForm
+            ?form        daisyLAAppForm
         )
         
-        daisyRNDock = hiDockWindow(
-            ?window daisyRNDockForm
+        daisyLADock = hiDockWindow(
+            ?window daisyLADockForm
             ?session swin
             ?side   'right)
             /**/
     ); let
 )
 
-procedure( daisyRNSetupInterfaceItem()
-    daisyRNDockForm()
+procedure( daisyLASetupInterfaceItem()
+    daisyLADockForm()
 )
 
-(procedure MyMenu( tmpVar )
-    let( (daisyRNDisplayLayoutInstancesItem daisyRNDisplaySchematicInstancesItem MenuItem2)
-        daisyRNSetupInterfaceItem = hiCreateAction(
-            ?name 'daisyRNSetupInterfaceItem
-            ?iconText "daisyRNSetupInterface"
-            ?callback "daisyRNSetupInterfaceItem()"
+; TODO Rename properly
+(procedure daisyLAMenu( tmpVar )
+    let( (daisyLADisplayLayoutInstancesItem daisyLADisplaySchematicInstancesItem MenuItem2)
+        daisyLASetupInterfaceItem = hiCreateAction(
+            ?name 'daisyLASetupInterfaceItem
+            ?iconText "daisyLASetupInterface"
+            ?callback "daisyLASetupInterfaceItem()"
         )
     
-        daisyRNDisplayLayoutInstancesItem = hiCreateAction(
-            ?name       'daisyRNDisplayLayoutInstancesItem
-            ?iconText   "daisyRNDisplayLayoutInstances"
-            ?callback   "daisyRNDisplayLayoutInstances()"
+        daisyLADisplayLayoutInstancesItem = hiCreateAction(
+            ?name       'daisyLADisplayLayoutInstancesItem
+            ?iconText   "daisyLADisplayLayoutInstances"
+            ?callback   "daisyLADisplayLayoutInstances()"
         )
  
-        daisyRNDisplaySchematicInstancesItem = hiCreateAction(
-            ?name       'daisyRNDisplaySchematicInstancesItem
-            ?iconText   "daisyRNDisplaySchematicInstances"
-            ?callback   "daisyRNDisplaySchematicInstances()"
+        daisyLADisplaySchematicInstancesItem = hiCreateAction(
+            ?name       'daisyLADisplaySchematicInstancesItem
+            ?iconText   "daisyLADisplaySchematicInstances"
+            ?callback   "daisyLADisplaySchematicInstances()"
         )
   
         clearAllHighlightsItem = hiCreateAction(
@@ -624,22 +602,22 @@ procedure( daisyRNSetupInterfaceItem()
             ?callback   "clearAllHighlights()"
         )
   
-        daisyRNCreateCorrespondenceTableItem = hiCreateAction(
-               ?name    'daisyRNCreateCorrespondenceTableItem
-               ?iconText "daisyRNCreateCorrespondenceTable"
-               ?callback "daisyRNCreateCorrespondenceTable()"
+        daisyLACreateCorrespondenceTableItem = hiCreateAction(
+               ?name    'daisyLACreateCorrespondenceTableItem
+               ?iconText "daisyLACreateCorrespondenceTable"
+               ?callback "daisyLACreateCorrespondenceTable()"
         )
 
-        daisyRNHighlightdaisyRNForSelectedInstancesItem = hiCreateAction(
-            ?name 'daisyRNHighlightdaisyRNForSelectedInstancesItem
-            ?iconText "daisyRNHighlightdaisyRNForSelectedInstances"
-            ?callback "daisyRNHighlightdaisyRNForSelectedInstances()"
+        daisyLAHighlightdaisyLAForSelectedInstancesItem = hiCreateAction(
+            ?name 'daisyLAHighlightdaisyLAForSelectedInstancesItem
+            ?iconText "daisyLAHighlightdaisyLAForSelectedInstances"
+            ?callback "daisyLAHighlightdaisyLAForSelectedInstances()"
         )
    
         hiCreatePulldownMenu(
             'MyPulldownMenu
-            "&ScriptIC daisyRN"
-            '(daisyRNSetupInterfaceItem daisyRNDisplayLayoutInstancesItem daisyRNDisplaySchematicInstancesItem clearAllHighlightsItem daisyRNCreateCorrespondenceTableItem daisyRNHighlightdaisyRNForSelectedInstancesItem )
+            "&ScriptIC daisyLA"
+            '(daisyLASetupInterfaceItem daisyLADisplayLayoutInstancesItem daisyLADisplaySchematicInstancesItem clearAllHighlightsItem daisyLACreateCorrespondenceTableItem daisyLAHighlightdaisyLAForSelectedInstancesItem )
         )
   
          hiInsertBannerMenu(
@@ -650,12 +628,12 @@ procedure( daisyRNSetupInterfaceItem()
     )
 )
 
-(procedure daisyRNBindingTreeSortCB(field settings)
+(procedure daisyLABindingTreeSortCB(field settings)
     println(field)
     println(settings)
 )
 
-(procedure daisyRNFindTermsInBindingsFromInstName(bindingList instName)
+(procedure daisyLAFindTermsInBindingsFromInstName(bindingList instName)
     (let (result)
         (foreach binding bindingList
             (cond
@@ -683,7 +661,7 @@ procedure( daisyRNSetupInterfaceItem()
     )
 )
 
-(procedure daisyRNFindTermsInMatchedBindingsFromInstName(bindingList instName)
+(procedure daisyLAFindTermsInMatchedBindingsFromInstName(bindingList instName)
     (let (result_matched result_sch result_lay)
         (foreach binding bindingList
             (cond
@@ -711,7 +689,7 @@ procedure( daisyRNSetupInterfaceItem()
     )
 )
 
-(procedure daisyRNUnbindInstances(bindingTree bindingTreeField)
+(procedure daisyLAUnbindInstances(bindingTree bindingTreeField)
     data = hiGetCurrentWindow()->data
     selItems = hiTreeTableGetSelectedItems(bindingTreeField)
     selItemsCount = hiTreeTableGetSelectedItemCount(bindingTreeField)
@@ -726,15 +704,15 @@ procedure( daisyRNSetupInterfaceItem()
             item = car(selItems)
             desc = hiGetTreeItemDescription(eval(item))
             
-            daisyRNUnbindInstance(data desc)
+            daisyLAUnbindInstance(data desc)
         )
     )
         
     ; Force reload
-    daisyRNPopulateBindingsTreeWithData(data bindingTree)
+    daisyLAPopulateBindingsTreeWithData(data bindingTree)
 )
 
-(procedure daisyRNGetBindingForInstance(bindings instName)
+(procedure daisyLAGetBindingForInstance(bindings instName)
     matched = bindings->matched
     unmatched_schematic = bindings->unmatched_schematic
     unmatched_layout = bindings->unmatched_layout
